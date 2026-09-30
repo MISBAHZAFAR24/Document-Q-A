@@ -1,6 +1,28 @@
 const fs = require("fs/promises");
 
-const aiServiceUrl = (process.env.AI_SERVICE_URL || "https://document-q-a-2.onrender.com").replace(/\/+$/, "");
+const defaultAiServiceUrl = "https://document-q-a-2.onrender.com";
+const configuredAiServiceUrl = process.env.AI_SERVICE_URL;
+const isRenderDeployment = Boolean(process.env.RENDER_SERVICE_ID);
+
+function isLoopbackUrl(value) {
+  if (!value) return false;
+
+  try {
+    return ["localhost", "127.0.0.1", "[::1]", "::1"].includes(new URL(value).hostname);
+  } catch {
+    return false;
+  }
+}
+
+const useDefaultAiServiceUrl = isRenderDeployment && isLoopbackUrl(configuredAiServiceUrl);
+const aiServiceUrl = (
+  useDefaultAiServiceUrl ? defaultAiServiceUrl : configuredAiServiceUrl || defaultAiServiceUrl
+).replace(/\/+$/, "");
+
+if (useDefaultAiServiceUrl) {
+  console.warn("Ignoring loopback AI_SERVICE_URL on Render; using the deployed AI service URL.");
+}
+
 const indexedDocuments = new Map();
 
 async function requestJson(url, options) {
