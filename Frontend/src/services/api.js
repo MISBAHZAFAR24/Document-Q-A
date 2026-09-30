@@ -1,7 +1,7 @@
 import axios from "axios";
 
 const API = axios.create({
-  baseURL: "http://localhost:5000/api",
+  baseURL: (import.meta.env.VITE_API_URL || "https://document-q-a-cppd.onrender.com/api").replace(/\/+$/, ""),
 });
 
 API.interceptors.request.use((config) => {
