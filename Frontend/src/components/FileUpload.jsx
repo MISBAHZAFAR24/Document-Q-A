@@ -29,7 +29,14 @@ function FileUpload({ onUploaded }) {
       setFile(null);
       onUploaded?.(data);
     } catch (requestError) {
-      setError(requestError.response?.data?.message || "Unable to upload document");
+      const responseMessage = requestError.response?.data?.message;
+      if (responseMessage) {
+        setError(responseMessage);
+      } else if (requestError.response) {
+        setError(`Upload failed with status ${requestError.response.status}.`);
+      } else {
+        setError(`Could not reach the upload service: ${requestError.message}. Check the connection and try again.`);
+      }
     } finally {
       setLoading(false);
     }

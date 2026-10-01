@@ -41,7 +41,7 @@ async function requestJson(url, options) {
 async function indexDocument(document) {
   const file = await fs.readFile(document.path);
   const formData = new FormData();
-  formData.append("file", new Blob([file], { type: document.mimetype }), document.name);
+  formData.append("file", new Blob([file], { type: "application/pdf" }), document.name);
 
   const result = await requestJson(`${aiServiceUrl}/documents/upload`, {
     method: "POST",
