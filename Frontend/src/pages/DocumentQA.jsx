@@ -4,7 +4,7 @@ import { useParams } from "react-router-dom";
 import Sidebar from "../components/Sidebar";
 import Navbar from "../components/Navbar";
 import QuestionBox from "../components/QuestionBox";
-import AnswerBox from "../components/AnswerBox";
+import ChatMessage from "../components/ChatMessage";
 import CitationCard from "../components/CitationCard";
 import API from "../services/api";
 
@@ -12,8 +12,8 @@ function DocumentQA() {
 
   const { id } = useParams();
 
-  const [answer, setAnswer] = useState("");
-  const [citation, setCitation] = useState(null);
+  const [messages, setMessages] = useState([]);
+  const [isAsking, setIsAsking] = useState(false);
   const [error, setError] = useState("");
 
   const handleAsk = async (question) => {
@@ -24,11 +24,21 @@ function DocumentQA() {
 
     try {
       setError("");
+      setIsAsking(true);
       const { data } = await API.post(`/chat/${id}`, { question });
-      setAnswer(data.answer);
-      setCitation(data.citation);
+      setMessages((current) => [
+        ...current,
+        {
+          id: data._id || `${Date.now()}-${question}`,
+          question,
+          answer: data.answer,
+          citation: data.citation,
+        },
+      ]);
     } catch (requestError) {
       setError(requestError.response?.data?.message || "Unable to answer question");
+    } finally {
+      setIsAsking(false);
     }
   };
 
@@ -41,13 +51,16 @@ function DocumentQA() {
 
         <Navbar title={`Document #${id}`} />
 
-        <QuestionBox onAsk={handleAsk} />
+        <QuestionBox onAsk={handleAsk} disabled={isAsking} />
 
         {error && <p className="error-message">{error}</p>}
 
-        <AnswerBox answer={answer} />
-
-        <CitationCard citation={citation} />
+        {messages.map((message) => (
+          <div key={message.id}>
+            <ChatMessage question={message.question} answer={message.answer} />
+            <CitationCard citation={message.citation} />
+          </div>
+        ))}
 
       </main>
 

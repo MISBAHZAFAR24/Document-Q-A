@@ -1,8 +1,11 @@
 import re
 
 STOP_WORDS = {
-    "a", "an", "and", "are", "be", "is", "in", "of", "on", "or", "the",
-    "to", "was", "what", "when", "where", "which", "who", "with", "this",
+    "a", "an", "and", "are", "be", "can", "could", "did", "do", "does",
+    "had", "has", "have", "he", "her", "his", "how", "i", "in", "is",
+    "it", "its", "me", "my", "of", "on", "or", "please", "she", "the",
+    "their", "them", "they", "this", "to", "us", "was", "we", "what",
+    "when", "where", "which", "who", "with", "would", "you", "your",
 }
 
 
@@ -14,6 +17,9 @@ def generate_answer(question: str, contexts: list[dict]) -> str:
         term for term in re.findall(r"[a-z0-9']+", question.lower())
         if term not in STOP_WORDS
     }
+    if not question_terms:
+        return "I could not find an answer in the document."
+
     candidates: list[tuple[tuple[int, float, int], str]] = []
 
     for context in contexts:
@@ -32,12 +38,12 @@ def generate_answer(question: str, contexts: list[dict]) -> str:
                     )
                 )
 
-    if candidates:
-        ranked = sorted(
-            candidates,
-            key=lambda item: (-item[0][0], -item[0][1], -item[0][2], item[1].lower()),
-        )
-        return ranked[0][1]
+    if not candidates:
+        return "I could not find an answer in the document."
 
-    fallback = re.split(r"(?<=[.!?])\s+", contexts[0]["text"])[0].strip()
-    return fallback or "I could not find an answer in the document."
+    ranked = sorted(
+        candidates,
+        key=lambda item: (-item[0][0], -item[0][1], -item[0][2], item[1].lower()),
+    )
+    relevant_sentences = list(dict.fromkeys(sentence for _, sentence in ranked[:3]))
+    return " ".join(relevant_sentences)

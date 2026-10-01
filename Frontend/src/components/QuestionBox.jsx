@@ -1,16 +1,15 @@
 import { useState } from "react";
 
-function QuestionBox({ onAsk }) {
+function QuestionBox({ onAsk, disabled = false }) {
   const [question, setQuestion] = useState("");
 
-  const handleAsk = () => {
+  const handleAsk = async () => {
     if (!question.trim()) {
       alert("Please enter a question.");
       return;
     }
 
-    onAsk(question);
-
+    await onAsk(question.trim());
     setQuestion("");
   };
 
@@ -27,8 +26,9 @@ function QuestionBox({ onAsk }) {
       <button
         className="ask-btn"
         onClick={handleAsk}
+        disabled={disabled}
       >
-        🤖 Ask AI
+        {disabled ? "Answering..." : "🤖 Ask AI"}
       </button>
     </div>
   );
