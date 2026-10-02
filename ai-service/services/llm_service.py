@@ -20,7 +20,7 @@ def generate_answer(question: str, contexts: list[dict]) -> str:
     if not question_terms:
         return "I could not find an answer in the document."
 
-    candidates: list[tuple[tuple[int, float, int], str]] = []
+    scored_sentences: list[tuple[tuple[int, float, int], str]] = []
 
     for context in contexts:
         for sentence in re.split(r"(?<=[.!?])\s+", context["text"]):
@@ -30,20 +30,29 @@ def generate_answer(question: str, contexts: list[dict]) -> str:
 
             terms = set(re.findall(r"[a-z0-9']+", clean_sentence.lower()))
             overlap = question_terms & terms
-            if overlap:
-                candidates.append(
-                    (
-                        (len(overlap), float(context.get("score", 0.0)), len(clean_sentence)),
-                        clean_sentence,
-                    )
+            scored_sentences.append(
+                (
+                    (len(overlap), float(context.get("score", 0.0)), len(clean_sentence)),
+                    clean_sentence,
                 )
+            )
 
-    if not candidates:
+    if not scored_sentences:
         return "I could not find an answer in the document."
 
     ranked = sorted(
-        candidates,
+        scored_sentences,
         key=lambda item: (-item[0][0], -item[0][1], -item[0][2], item[1].lower()),
     )
+
+    if ranked[0][0][0] == 0:
+        ranked = sorted(
+            scored_sentences,
+            key=lambda item: (-item[0][1], -item[0][2], item[1].lower()),
+        )
+
     relevant_sentences = list(dict.fromkeys(sentence for _, sentence in ranked[:3]))
+    if not relevant_sentences:
+        return "I could not find an answer in the document."
+
     return " ".join(relevant_sentences)
